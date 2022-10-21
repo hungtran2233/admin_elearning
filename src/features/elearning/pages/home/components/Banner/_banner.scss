@@ -1,0 +1,60 @@
+.Banner {
+	padding-top: 100px;
+	padding-bottom: 50px;
+	background-repeat: no-repeat;
+	background-size: cover;
+	height: 700px;
+	position: relative;
+
+	&::before {
+		content: "";
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+	}
+
+	//////
+	.content {
+		position: relative;
+		z-index: 99;
+		text-align: center;
+
+		.title {
+			font-size: 40px;
+			color: white;
+		}
+		.description {
+			font-size: 18px;
+			color: white;
+			margin-bottom: 10px;
+			i {
+				transform: translateY(-3px);
+				margin: 0 5px;
+			}
+		}
+
+		.Typewriter {
+			font-size: 18px;
+			color: rgb(248, 204, 204);
+		}
+
+		.search-area {
+		}
+	}
+}
+
+@media only screen and (max-width: 576px) {
+	.Banner {
+		height: 500px;
+
+		.content {
+			padding: 0 10px;
+			.title {
+				font-size: 30px;
+			}
+		}
+	}
+}
