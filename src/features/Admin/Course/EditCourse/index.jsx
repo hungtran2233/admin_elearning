@@ -16,14 +16,11 @@ import * as yup from "yup";
 import React, { useState } from "react";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-	createMovieAction,
-	fetchMovieDetailAction,
-	updateMovieAction,
-} from "features/Admin/utils/adminAction";
+
 import { useLocation, useNavigate, useRouteMatch } from "react-router-dom";
 import moment from "moment";
 import { useHistory } from "react-router";
+import { fetchCourseDetailAction } from "../utils/courseAction";
 
 const schema = yup.object({
 	tenPhim: yup.string().required("*Bạn chưa nhập tên phim !"),
@@ -38,100 +35,101 @@ function EditCourse() {
 
 	const match = useLocation();
 	const index = match.pathname.lastIndexOf("/");
-	const movieId = match.pathname.slice(index + 1, match.pathname.length);
-	// console.log(movieId);
+	const courseId = match.pathname.slice(index + 1, match.pathname.length);
+	// console.log(courseId);
 
 	// get movie to fill form
-	const fetchMovieDetail = () => {
-		dispatch(fetchMovieDetailAction(movieId));
+	const fetchCourseDetail = () => {
+		dispatch(fetchCourseDetailAction(courseId));
 	};
 
 	useEffect(() => {
-		fetchMovieDetail();
+		fetchCourseDetail();
 	}, []);
 
-	const movieDetail = useSelector((state) => state.admin.movieDetail);
+	const courseDetail = useSelector((state) => state.course.courseDetail);
 
 	// Validation Form
-	const formik = useFormik({
-		enableReinitialize: true,
-		initialValues: {
-			maPhim: movieDetail?.maPhim,
-			tenPhim: movieDetail?.tenPhim,
-			trailer: movieDetail?.trailer,
-			moTa: movieDetail?.moTa,
-			dangChieu: movieDetail?.dangChieu,
-			sapChieu: movieDetail?.sapChieu,
-			hot: movieDetail?.hot,
-			danhGia: movieDetail?.danhGia,
-			ngayKhoiChieu: movieDetail?.ngayKhoiChieu,
-			hinhAnh: null,
-		},
-		onSubmit: (values) => {
-			console.log(values);
-			values.maNhom = "GP03";
-			// // 1) Create formData object
-			let formData = new FormData();
-			for (let key in values) {
-				if (key !== "hinhAnh") {
-					formData.append(key, values[key]);
-				} else {
-					// formData.append("custom name", object file, file name )
-					if (values.hinhAnh !== null) {
-						formData.append("File", values.hinhAnh, values.hinhAnh.name);
-					}
-				}
-			}
-			// get hinhAnh
-			// console.log(formData.get("File").name);
+	// const formik = useFormik({
+	// 	enableReinitialize: true,
+	// 	initialValues: {
+	// 		maKhoaHoc: courseDetail.maPhim,
+	// 		biDanh: courseDetail.biDanh,
+	// 		tenKhoaHoc: courseDetail.tenPhim,
+	// 		moTa: courseDetail.moTa,
+	// 		luotXem: courseDetail.luotXem,
+	// 		hinhAnh: null,
+	// 		ngayTao: courseDetail.ngayTao,
+	// 		soLuongHocVien: courseDetail.soLuongHocVien,
+	// 		nguoiTao: courseDetail.nguoiTao,
+	// 		danhMucKhoaHoc: courseDetail.danhMucKhoaHoc
 
-			// 2) Call api
-			dispatch(updateMovieAction(formData));
-		},
+	// 	},
+	// 	onSubmit: (values) => {
+	// 		console.log(values);
+	// 		values.maNhom = "GP03";
+	// 		// // 1) Create formData object
+	// 		let formData = new FormData();
+	// 		for (let key in values) {
+	// 			if (key !== "hinhAnh") {
+	// 				formData.append(key, values[key]);
+	// 			} else {
+	// 				// formData.append("custom name", object file, file name )
+	// 				if (values.hinhAnh !== null) {
+	// 					formData.append("File", values.hinhAnh, values.hinhAnh.name);
+	// 				}
+	// 			}
+	// 		}
+	// 		// get hinhAnh
+	// 		// console.log(formData.get("File").name);
 
-		// validationSchema: schema,
-	});
+	// 		// 2) Call api
+	// 		dispatch(updateMovieAction(formData));
+	// 	},
+
+	// 	// validationSchema: schema,
+	// });
 
 	// setting form antd
-	const [componentSize, setComponentSize] = useState("default");
-	const onFormLayoutChange = ({ size }) => {
-		setComponentSize(size);
-	};
+	// const [componentSize, setComponentSize] = useState("default");
+	// const onFormLayoutChange = ({ size }) => {
+	// 	setComponentSize(size);
+	// };
 
-	const handleChangeDatePicker = (value) => {
-		let date = moment(value);
-		formik.setFieldValue("ngayKhoiChieu", date);
-	};
+	// const handleChangeDatePicker = (value) => {
+	// 	let date = moment(value);
+	// 	formik.setFieldValue("ngayKhoiChieu", date);
+	// };
 
-	const handleChangeSwitch = (name) => {
-		return (value) => formik.setFieldValue(name, value);
-	};
+	// const handleChangeSwitch = (name) => {
+	// 	return (value) => formik.setFieldValue(name, value);
+	// };
 
-	const handleChangeInputNumber = (name) => {
-		return (value) => formik.setFieldValue(name, value);
-	};
+	// const handleChangeInputNumber = (name) => {
+	// 	return (value) => formik.setFieldValue(name, value);
+	// };
 
-	const handleChangeFile = async (e) => {
-		//1) get file from e
-		let file = e.target.files[0];
-		//2) create object to read file
-		if (
-			file.type === "image/jpeg" ||
-			file.type === "image/jpg" ||
-			file.type === "image/gif" ||
-			file.type === "image/png"
-		) {
-			// Save file data to formik. Notice: setFieldValue is async func
-			await formik.setFieldValue("hinhAnh", file);
-			let reader = new FileReader();
-			reader.readAsDataURL(file);
-			reader.onload = (e) => {
-				setImg(e.target.result);
-			};
-		}
-	};
+	// const handleChangeFile = async (e) => {
+	// 	//1) get file from e
+	// 	let file = e.target.files[0];
+	// 	//2) create object to read file
+	// 	if (
+	// 		file.type === "image/jpeg" ||
+	// 		file.type === "image/jpg" ||
+	// 		file.type === "image/gif" ||
+	// 		file.type === "image/png"
+	// 	) {
+	// 		// Save file data to formik. Notice: setFieldValue is async func
+	// 		await formik.setFieldValue("hinhAnh", file);
+	// 		let reader = new FileReader();
+	// 		reader.readAsDataURL(file);
+	// 		reader.onload = (e) => {
+	// 			setImg(e.target.result);
+	// 		};
+	// 	}
+	// };
 
-	if (!movieDetail) {
+	if (!courseDetail) {
 		return (
 			<div>
 				<Spin size="large" />
@@ -139,9 +137,11 @@ function EditCourse() {
 		);
 	}
 
+	console.log(courseDetail);
+
 	return (
 		<div>
-			<Form
+			{/* <Form
 				onSubmitCapture={formik.handleSubmit}
 				labelCol={{
 					span: 4,
@@ -156,7 +156,7 @@ function EditCourse() {
 				onValuesChange={onFormLayoutChange}
 				size={componentSize}
 			>
-				<h1>Chỉnh sửa phim</h1>
+				<h1>Chỉnh sửa khóa học</h1>
 				<Form.Item label="Kích cỡ form" name="size">
 					<Radio.Group>
 						<Radio.Button value="small">Nhỏ</Radio.Button>
@@ -164,9 +164,9 @@ function EditCourse() {
 						<Radio.Button value="large">Lớn</Radio.Button>
 					</Radio.Group>
 				</Form.Item>
-				<Form.Item label="Tên phim">
+				<Form.Item label="Tên khóa học">
 					<Input
-						name="tenPhim"
+						name="tenKhoaHoc"
 						onChange={formik.handleChange}
 						onBlur={formik.handleBlur}
 						value={formik.values.tenPhim}
@@ -282,7 +282,7 @@ function EditCourse() {
 						Trở về
 					</button>
 				</Form.Item>
-			</Form>
+			</Form> */}
 		</div>
 	);
 }

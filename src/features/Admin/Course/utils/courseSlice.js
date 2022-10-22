@@ -1,8 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchCourseListAction } from "./courseAction";
+import { fetchCourseDetailAction, fetchCourseListAction } from "./courseAction";
 
 const initialState = {
 	courseList: null,
+	courseDetail: null,
 };
 
 const courseSlice = createSlice({
@@ -14,6 +15,11 @@ const courseSlice = createSlice({
 		// Course list
 		builder.addCase(fetchCourseListAction.fulfilled, (state, action) => {
 			state.courseList = action.payload;
+		});
+
+		// Course detail
+		builder.addCase(fetchCourseDetailAction.fulfilled, (state, action) => {
+			state.courseDetail = action.payload;
 		});
 	},
 });

@@ -17,3 +17,76 @@ export const fetchCourseListAction = createAsyncThunk(
 		}
 	}
 );
+
+// Add Course Upload Image
+export const addCourseAction = createAsyncThunk("course/addCourse", async (formData) => {
+	try {
+		const res = await instance.request({
+			url: "/api/QuanLyKhoaHoc/ThemKhoaHocUploadHinh",
+			method: "POST",
+			data: formData,
+		});
+		alert("Thêm khóa học thành công !");
+		return res.data;
+	} catch (err) {
+		alert("Không thành công: " + err.response.data);
+		console.log(err);
+	}
+});
+
+// get Course Category
+export const fetchCourseCategoryAction = createAsyncThunk(
+	"course/fetchCourseCategory",
+	async () => {
+		try {
+			const res = await instance.request({
+				url: "/api/QuanLyKhoaHoc/LayDanhMucKhoaHoc",
+				method: "GET",
+			});
+
+			// console.log(res.data);
+			return res.data;
+		} catch (err) {
+			console.log(err);
+		}
+	}
+);
+
+// get Creator
+export const fetchCreatorAction = createAsyncThunk("creator/fetchCreator", async () => {
+	try {
+		const res = await instance.request({
+			url: "/api/QuanLyNguoiDung/TimKiemNguoiDung",
+			method: "GET",
+			params: {
+				maNhom: "GP01",
+			},
+		});
+
+		// console.log(res.data);
+		return res.data;
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+// get 1 movie to edit
+export const fetchCourseDetailAction = createAsyncThunk(
+	"course/fetchCourseDetail",
+	async (courseId) => {
+		try {
+			const res = await instance.request({
+				url: "/api/QuanLyKhoaHoc/LayThongTinKhoaHoc",
+				method: "GET",
+				params: {
+					maKhoaHoc: courseId,
+				},
+			});
+
+			// console.log(res.data);
+			return res.data;
+		} catch (err) {
+			console.log(err);
+		}
+	}
+);

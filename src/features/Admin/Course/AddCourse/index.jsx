@@ -12,43 +12,82 @@ import {
 } from "antd";
 import { useFormik } from "formik";
 import * as yup from "yup";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import moment from "moment";
 import { min } from "lodash";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { createMovieAction } from "features/Admin/utils/adminAction";
-import { useHistory } from "react-router";
 import { Navigate, useNavigate } from "react-router-dom";
+import { convertToSlug } from "common/convertToSlug";
+import {
+	addCourseAction,
+	fetchCourseCategoryAction,
+	fetchCreatorAction,
+} from "../utils/courseAction";
+import Swal from "sweetalert2";
+import SunEditor from "suneditor-react";
 
 const schema = yup.object({
-	tenPhim: yup.string().required("*Bạn chưa nhập tên phim !"),
-	trailer: yup.string().required("*Bạn chưa nhập trailer !"),
-	moTa: yup.string().required("*Bạn chưa nhập mô tả !"),
-	ngayKhoiChieu: yup.string().required("*Bạn chưa chọn ngày khởi chiếu !"),
+	maKhoaHoc: yup.string().required("*Bạn chưa nhập mã khóa học !"),
+	maDanhMucKhoaHoc: yup.string().required("*Bạn chưa chọn danh mục khóa học !"),
+	taiKhoanNguoiTao: yup.string().required("*Bạn chưa chọn người tạo !"),
+	tenKhoaHoc: yup.string().required("*Bạn chưa nhập tên khóa học !"),
+	hinhAnh: yup.string().required("*Bạn chưa chọn hình ảnh !"),
+	ngayTao: yup.string().required("*Bạn chưa chọn ngày tạo !"),
 });
 
 function AddCourse() {
 	const [img, setImg] = useState("");
 	const dispatch = useDispatch();
-
 	const navigate = useNavigate();
+
+	// course category
+	const [courseCategory, setCourseCategory] = useState([]);
+	// creator
+	const [creator, setCreator] = useState([]);
+
+	// input slug
+	const [slug, setSlug] = useState("");
+
+	// get course category
+	const fetchCourseCategory = async () => {
+		const data = await dispatch(fetchCourseCategoryAction());
+		setCourseCategory(data.payload);
+	};
+
+	// get creator
+	const fetchCreator = async () => {
+		const data = await dispatch(fetchCreatorAction());
+		const arrGV = data.payload.filter((item) => item.maLoaiNguoiDung === "GV");
+		setCreator(arrGV);
+	};
+
+	useEffect(() => {
+		fetchCourseCategory();
+		fetchCreator();
+	}, []);
 
 	// Validation Form
 	const formik = useFormik({
 		initialValues: {
-			tenPhim: "",
-			trailer: "",
+			maKhoaHoc: "",
+			biDanh: "",
+			tenKhoaHoc: "",
 			moTa: "",
-			ngayKhoiChieu: "",
-			dangChieu: false,
-			sapChieu: false,
-			hot: false,
+			luotXem: 0,
 			danhGia: 0,
+
 			hinhAnh: {},
+			ngayTao: "",
+
+			maDanhMucKhoaHoc: "",
+			taiKhoanNguoiTao: "",
 		},
 		onSubmit: (values) => {
-			values.maNhom = "GP03";
+			values.maNhom = "GP01";
+			values.biDanh = slug;
+			// console.log(values);
+			// return;
 			// 1) Create formData object
 			let formData = new FormData();
 			for (let key in values) {
@@ -61,10 +100,16 @@ function AddCourse() {
 			}
 			// get hinhAnh
 			// console.log(formData.get("File").name);
-			// console.log(formData.get("danhGia"));
+			// console.log(formData.get("tenKhoaHoc"));
+
 			// 2) Call api
-			dispatch(createMovieAction(formData));
-			setTimeout(navigate("/movies/manage"), 2000);
+			let choice = window.confirm("Bạn có muốn thêm khóa học này không ?");
+			if (choice == true) {
+				dispatch(addCourseAction(formData));
+				setTimeout(navigate("/course/manage"), 2000);
+			} else {
+				return;
+			}
 		},
 
 		validationSchema: schema,
@@ -72,25 +117,21 @@ function AddCourse() {
 
 	// setting form antd
 	const [componentSize, setComponentSize] = useState("default");
-
-	// setting value for form
 	const onFormLayoutChange = ({ size }) => {
 		setComponentSize(size);
 	};
 
+	// change date picker
 	const handleChangeDatePicker = (value) => {
 		let date = moment(value).format("DD/MM/YYYY");
-		formik.setFieldValue("ngayKhoiChieu", date);
-	};
-
-	const handleChangeSwitch = (name) => {
-		return (value) => formik.setFieldValue(name, value);
+		formik.setFieldValue("ngayTao", date);
 	};
 
 	const handleChangeInputNumber = (name) => {
 		return (value) => formik.setFieldValue(name, value);
 	};
 
+	// change image
 	const handleChangeFile = (e) => {
 		//1) get file from e
 		let file = e.target.files[0];
@@ -106,10 +147,49 @@ function AddCourse() {
 			reader.onload = (e) => {
 				setImg(e.target.result);
 			};
-
 			formik.setFieldValue("hinhAnh", file);
 		}
 	};
+
+	if (courseCategory.length === 0) return <div>Loading...</div>;
+
+	// ========= setting select course category ===========
+	// convert select course category
+	const convertSelectCourseCategory = () => {
+		return courseCategory?.map((item, index) => {
+			return {
+				label: item.tenDanhMuc,
+				value: item.maDanhMuc,
+				key: index,
+			};
+		});
+	};
+	// get value select course category
+	const handleChangeCourseCategory = (value) => {
+		formik.setFieldValue("maDanhMucKhoaHoc", value);
+	};
+	// ========== END setting select course category ==========
+
+	// ========= setting select Creator ===========
+	// convert select Creator
+	const convertSelectCreator = () => {
+		return creator?.map((item, index) => {
+			return {
+				label: item.hoTen,
+				value: item.taiKhoan,
+				key: index,
+			};
+		});
+	};
+	// get value select Creator
+	const handleChangeCreator = (value) => {
+		//  Vì khi dùng thẻ select có mode="tags" , thì ta có thể dùng thêm được
+		// chức năng tìm kiếm. Tuy nhiên, kết quả nó luôn trả về một mảng
+		// Vậy nên ta chỉ lấy một giá trị đầu tiên trong mảng (vì api chỉ yêu cầu 1 giá trị)
+		// console.log(value[0]);
+		formik.setFieldValue("taiKhoanNguoiTao", value[0]);
+	};
+	// ========== end setting select course category ==========
 
 	return (
 		<div>
@@ -129,7 +209,7 @@ function AddCourse() {
 				size={componentSize}
 			>
 				<h1 style={{ fontSize: 20, marginLeft: 50, marginBottom: 30 }}>
-					Thêm phim mới
+					Thêm khóa học mới
 				</h1>
 				<Form.Item label="Kích cỡ form" name="size">
 					<Radio.Group>
@@ -138,69 +218,92 @@ function AddCourse() {
 						<Radio.Button value="large">Lớn</Radio.Button>
 					</Radio.Group>
 				</Form.Item>
-				<Form.Item label="Tên phim">
+
+				<Form.Item label="Danh mục khóa học">
+					<Select
+						name="maDanhMucKhoaHoc"
+						options={convertSelectCourseCategory()}
+						placeholder="Chọn danh mục"
+						onChange={handleChangeCourseCategory}
+						onBlur={formik.handleBlur}
+					></Select>
+					{formik.touched.maRap && formik.errors.maRap && (
+						<p style={{ color: "red", margin: 0 }}>{formik.errors.maRap}</p>
+					)}
+				</Form.Item>
+
+				<Form.Item label="Người tạo">
+					<Select
+						name="taiKhoanNguoiTao"
+						options={convertSelectCreator()}
+						placeholder="Chọn người tạo"
+						onChange={handleChangeCreator}
+						mode="tags"
+						onBlur={formik.handleBlur}
+					></Select>
+					{formik.touched.maRap && formik.errors.maRap && (
+						<p style={{ color: "red", margin: 0 }}>{formik.errors.maRap}</p>
+					)}
+					<div style={{ marginTop: 10, color: "gray", fontStyle: "italic" }}>
+						*Lưu ý: chỉ nên chọn một người tạo, hệ thống chỉ lấy một người đầu
+						tiên
+					</div>
+				</Form.Item>
+
+				<Form.Item label="Mã khóa học">
 					<Input
-						name="tenPhim"
+						name="maKhoaHoc"
 						onChange={formik.handleChange}
 						onBlur={formik.handleBlur}
 					/>
 
-					{formik.touched.tenPhim && formik.errors.tenPhim && (
-						<p style={{ color: "red", margin: 0 }}>{formik.errors.tenPhim}</p>
-					)}
-				</Form.Item>
-				<Form.Item label="Trailer">
-					<Input
-						name="trailer"
-						onChange={formik.handleChange}
-						onBlur={formik.handleBlur}
-					/>
-					{formik.touched.trailer && formik.errors.trailer && (
-						<p style={{ color: "red", margin: 0 }}>{formik.errors.trailer}</p>
-					)}
-				</Form.Item>
-
-				<Form.Item label="Mô tả">
-					<Input
-						name="moTa"
-						onChange={formik.handleChange}
-						onBlur={formik.handleBlur}
-					/>
-					{formik.touched.moTa && formik.errors.moTa && (
-						<p style={{ color: "red", margin: 0 }}>{formik.errors.moTa}</p>
-					)}
-				</Form.Item>
-
-				<Form.Item label="Ngày khởi chiếu">
-					<DatePicker
-						name="ngayKhoiChieu"
-						format={"DD/MM/YYYY"}
-						onChange={handleChangeDatePicker}
-						onBlur={formik.handleBlur}
-					/>
-					{formik.touched.ngayKhoiChieu && formik.errors.ngayKhoiChieu && (
+					{formik.touched.maKhoaHoc && formik.errors.maKhoaHoc && (
 						<p style={{ color: "red", margin: 0 }}>
-							{formik.errors.ngayKhoiChieu}
+							{formik.errors.maKhoaHoc}
 						</p>
 					)}
 				</Form.Item>
 
-				<Form.Item label="Đang chiếu" valuePropName="checked">
-					<Switch onChange={handleChangeSwitch("dangChieu")} />
+				<Form.Item label="Tên khóa học">
+					<Input
+						name="tenKhoaHoc"
+						onChange={formik.handleChange}
+						onBlur={(e) => {
+							formik.handleBlur(e);
+							setSlug(convertToSlug(e.target.value.trim()));
+						}}
+					/>
+
+					{formik.touched.tenKhoaHoc && formik.errors.tenKhoaHoc && (
+						<p style={{ color: "red", margin: 0 }}>
+							{formik.errors.tenKhoaHoc}
+						</p>
+					)}
 				</Form.Item>
 
-				<Form.Item label="Sắp chiếu" valuePropName="checked">
-					<Switch onChange={handleChangeSwitch("sapChieu")} />
+				<Form.Item label="Bí danh">
+					<Input name="biDanh" value={slug} disabled />
+					<div style={{ marginTop: 10, color: "gray", fontStyle: "italic" }}>
+						*Lưu ý: bí danh sẽ dựa vào tên khóa học, không cần nhập vào!
+					</div>
 				</Form.Item>
 
-				<Form.Item label="Hot" valuePropName="checked">
-					<Switch onChange={handleChangeSwitch("hot")} />
+				<Form.Item label="Mô tả">
+					<SunEditor />
 				</Form.Item>
 
-				<Form.Item label="Số sao">
+				<Form.Item label="Lượt xem">
+					<InputNumber
+						onChange={handleChangeInputNumber("luotXem")}
+						min={0}
+						max={9999999}
+					/>
+				</Form.Item>
+
+				<Form.Item label="Đánh giá">
 					<InputNumber
 						onChange={handleChangeInputNumber("danhGia")}
-						min={1}
+						min={0}
 						max={10}
 					/>
 				</Form.Item>
@@ -220,6 +323,19 @@ function AddCourse() {
 					/>
 				</Form.Item>
 
+				<Form.Item label="Ngày tạo">
+					<DatePicker
+						name="ngayTao"
+						format={"DD/MM/YYYY"}
+						onChange={handleChangeDatePicker}
+						onBlur={formik.handleBlur}
+						placeholder="Chọn ngày"
+					/>
+					{formik.touched.ngayTao && formik.errors.ngayTao && (
+						<p style={{ color: "red", margin: 0 }}>{formik.errors.ngayTao}</p>
+					)}
+				</Form.Item>
+
 				<Form.Item label="Hành động">
 					<button
 						type="submit"
@@ -231,11 +347,11 @@ function AddCourse() {
 							color: "#fff",
 						}}
 					>
-						Thêm phim
+						Thêm khóa học
 					</button>
 					<button
 						style={{ marginLeft: 20, cursor: "pointer" }}
-						onClick={() => navigate("/movies/manage")}
+						onClick={() => navigate("/course/manage")}
 					>
 						Trở về
 					</button>

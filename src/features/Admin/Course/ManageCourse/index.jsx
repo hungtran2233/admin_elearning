@@ -1,5 +1,5 @@
 import React, { Fragment, useState } from "react";
-import { Button, Spin, Table } from "antd";
+import { Button, Modal, Spin, Table } from "antd";
 import {
 	AudioOutlined,
 	CalendarOutlined,
@@ -36,6 +36,8 @@ function ManageCourse() {
 	// 	}
 	// };
 
+	// setting modal
+
 	const columns = [
 		{
 			title: "Mã khóa học",
@@ -49,14 +51,16 @@ function ManageCourse() {
 			title: "Hình ảnh",
 			dataIndex: "hinhAnh",
 			key: "hinhAnh",
-			width: "15%",
+			width: "10%",
 			render: (text, course, index) => {
 				return (
 					<Fragment>
 						<img
 							key={index}
 							src={course.hinhAnh}
-							width={50}
+							width={100}
+							height={80}
+							style={{ border: "1px solid #cbcfd2" }}
 							alt=""
 							onError={(e) => (
 								(e.target.onerror = null),
@@ -82,12 +86,22 @@ function ManageCourse() {
 			},
 			sortDirections: ["descend"],
 			filteredValue: [searchText],
-			onFilter: (value, record) => {
+			onFilter: (value, course) => {
 				return (
-					String(record.tenKhoaHoc)
+					String(course.tenKhoaHoc)
 						.toLowerCase()
 						.includes(value.toLowerCase()) ||
-					String(record.tenKhoaHoc).toLowerCase().includes(value.toLowerCase())
+					String(course.tenKhoaHoc).toLowerCase().includes(value.toLowerCase())
+				);
+			},
+			render: (text, course) => {
+				return (
+					<Fragment>
+						<div>{course.tenKhoaHoc}</div>
+						<div style={{ marginTop: 20 }}>
+							<Button>Chi tiết</Button>
+						</div>
+					</Fragment>
 				);
 			},
 		},
@@ -95,15 +109,25 @@ function ManageCourse() {
 			title: "Mô tả",
 			dataIndex: "moTa",
 			key: "moTa",
-			width: "40%",
+			width: "20%",
 			render: (text, course) => {
 				return (
 					<Fragment>
-						{course.moTa.length > 50
-							? course.moTa.substr(0, 50) + " ..."
+						{course.moTa.length > 100
+							? course.moTa.substr(0, 100) + " ..."
 							: course.moTa}
 					</Fragment>
 				);
+			},
+		},
+
+		{
+			title: "Danh mục",
+			dataIndex: "danhMucKhoaHoc",
+			key: "danhMucKhoaHoc",
+			width: "10%",
+			render: (text, course) => {
+				return <Fragment>{course.danhMucKhoaHoc.tenDanhMucKhoaHoc}</Fragment>;
 			},
 		},
 
@@ -127,16 +151,6 @@ function ManageCourse() {
 								title="Xóa"
 							/>
 						</span>
-
-						{/* <NavLink
-							style={{ marginLeft: 20 }}
-							to={"/movies/showtime/" + course.maKhoaHoc}
-						>
-							<CalendarOutlined
-								style={{ fontSize: 25 }}
-								title="Thêm lịch chiếu"
-							/>
-						</NavLink> */}
 					</Fragment>
 				);
 			},
@@ -165,7 +179,12 @@ function ManageCourse() {
 					marginBottom: 20,
 				}}
 			/>
-			<Table columns={columns} dataSource={data} rowKey="maKhoaHoc" />
+			<Table
+				columns={columns}
+				dataSource={data}
+				rowKey="maKhoaHoc"
+				pagination={{ defaultPageSize: 5 }}
+			/>
 		</div>
 	);
 }

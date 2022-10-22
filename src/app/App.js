@@ -1,4 +1,5 @@
 import "../App.scss";
+import "suneditor/dist/css/suneditor.min.css";
 import { Route, Routes, BrowserRouter as Router } from "react-router-dom";
 import Admin from "features/Admin";
 import User from "features/Admin/User/User";
