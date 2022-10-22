@@ -8,7 +8,8 @@ const instance = axios.create({
 	},
 	timeout: 10000,
 });
-//interceptors
+
+// interceptors
 instance.interceptors.request.use((config) => {
 	config.headers = {
 		...config.headers,

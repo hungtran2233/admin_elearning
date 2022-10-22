@@ -1,34 +1,24 @@
 import "../App.scss";
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-
-import Header from "common/components/Header";
-import Home from "features/elearning/pages/home";
-import Detail from "features/elearning/pages/details";
-import SignIn from "features/authentication/SignIn";
-import SignUp from "features/authentication/SignUp";
-import Footer from "common/components/Footer";
-import { useDispatch } from "react-redux";
-import { useEffect } from "react";
-import { fetchProfileAction } from "features/authentication/authAction";
-
+import { Route, Routes, BrowserRouter as Router } from "react-router-dom";
+import Admin from "features/Admin";
+import User from "features/Admin/User/User";
+import ManageCourse from "features/Admin/Course/ManageCourse";
+import EditCourse from "features/Admin/Course/EditCourse";
+import AddCourse from "features/Admin/Course/AddCourse";
 
 function App() {
-	const dispatch = useDispatch();
-	useEffect(() => {
-		dispatch(fetchProfileAction());
-	}, []);
-
 	return (
 		<div>
 			<Router>
-				<Header />
-				<Switch>
-					<Route path="/" component={Home} exact />
-					<Route path="/details/:id/:slug" component={Detail} exact />
-					<Route path="/signin" component={SignIn} />
-					<Route path="/signup" component={SignUp} />
-				</Switch>
-				<Footer />
+				<Routes>
+					{/* <Route path="/signin" element={<SignIn setGetUser={setGetUser} />} /> */}
+					<Route path="/*" element={<Admin />}>
+						<Route path="/*users" element={<User />} />
+						<Route path="/*course/manage" element={<ManageCourse />} />
+						<Route path="/*course/edit/:id" element={<EditCourse />} />
+						<Route path="/*course/add" element={<AddCourse />} />
+					</Route>
+				</Routes>
 			</Router>
 		</div>
 	);

@@ -1,11 +1,9 @@
 import { configureStore } from "@reduxjs/toolkit";
-import authSlice from "features/authentication/authSlice";
-import homeSlice from "features/elearning/pages/home/utils/homeSlice";
+import courseSlice from "features/Admin/Course/utils/courseSlice";
 
 const store = configureStore({
 	reducer: {
-		eLearningHome: homeSlice.reducer,
-		auth: authSlice.reducer,
+		course: courseSlice.reducer,
 	},
 });
 export default store;

@@ -1,0 +1,19 @@
+.signIn {
+	max-width: 500px;
+	margin: 150px auto;
+	height: 400px;
+	border-radius: 12px;
+	background-color: #092b4c;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: white !important;
+	.ant-form-item-required {
+		color: white;
+	}
+	.ant-form-item {
+		label {
+			color: white;
+		}
+	}
+}
