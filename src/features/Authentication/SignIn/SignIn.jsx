@@ -1,39 +1,34 @@
 import { Button, Checkbox, Form, Input } from "antd";
 import instance from "api/instance";
 import React, { useState } from "react";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+import { signInAction } from "../utils/authAction";
 
 import "./SignIn.scss";
-const SignIn = ({ setGetUser }) => {
+const SignIn = () => {
 	const navigate = useNavigate();
-	const onFinish = (values) => {
-		fetchUsers(values);
-		console.log("Success:", values);
+	const dispatch = useDispatch();
+
+	const onFinish = async (values) => {
+		const data = await dispatch(signInAction(values));
+		if (data.payload === undefined) {
+			return;
+		} else {
+			Swal.fire({
+				position: "center",
+				icon: "success",
+				title: "Đăng nhập thành công!",
+				showConfirmButton: false,
+				timer: 1500,
+			});
+			setTimeout(() => navigate("/admin"), 2000);
+		}
 	};
 
 	const onFinishFailed = (errorInfo) => {
 		console.log("Failed:", errorInfo);
-	};
-
-	const fetchUsers = async (acount) => {
-		try {
-			const res = await instance.request({
-				url: "/api/QuanLyNguoiDung/DangNhap",
-				method: "POST",
-				data: acount,
-			});
-			console.log(res);
-			if (res.data.maLoaiNguoiDung === "GV") {
-				localStorage.setItem("token", res.data.accessToken);
-				delete res.data.content.accessToken;
-				setGetUser(res.data.content);
-				navigate("/users");
-				return;
-			}
-			return alert("Bạn Không Đủ Quyền Truy Cập");
-		} catch (error) {
-			alert("Sai Tên Tài Khoản Hoặc Mật Khẩu");
-		}
 	};
 
 	return (

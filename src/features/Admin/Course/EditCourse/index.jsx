@@ -7,25 +7,36 @@ import {
 	InputNumber,
 	Radio,
 	Select,
-	Spin,
 	Switch,
 	TreeSelect,
 } from "antd";
 import { useFormik } from "formik";
 import * as yup from "yup";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
+import moment from "moment";
+import { min } from "lodash";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
-import { useLocation, useNavigate, useRouteMatch } from "react-router-dom";
-import moment from "moment";
-import { useHistory } from "react-router";
-import { fetchCourseDetailAction } from "../utils/courseAction";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { convertToSlug } from "common/convertToSlug";
+import {
+	addCourseAction,
+	fetchCourseCategoryAction,
+	fetchCourseDetailAction,
+	fetchCreatorAction,
+	updateCourseAction,
+} from "../utils/courseAction";
+import Swal from "sweetalert2";
+import SunEditor from "suneditor-react";
+const { TextArea } = Input;
 
 const schema = yup.object({
-	tenPhim: yup.string().required("*Bạn chưa nhập tên phim !"),
-	trailer: yup.string().required("*Bạn chưa nhập trailer !"),
-	moTa: yup.string().required("*Bạn chưa nhập mô tả !"),
+	maKhoaHoc: yup.string().required("*Bạn chưa nhập mã khóa học !"),
+	maDanhMucKhoaHoc: yup.string().required("*Bạn chưa chọn danh mục khóa học !"),
+	taiKhoanNguoiTao: yup.string().required("*Bạn chưa chọn người tạo !"),
+	tenKhoaHoc: yup.string().required("*Bạn chưa nhập tên khóa học !"),
+	hinhAnh: yup.string().required("*Bạn chưa chọn hình ảnh !"),
+	ngayTao: yup.string().required("*Bạn chưa chọn ngày tạo !"),
 });
 
 function EditCourse() {
@@ -33,115 +44,177 @@ function EditCourse() {
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 
+	// get courseId from url
 	const match = useLocation();
 	const index = match.pathname.lastIndexOf("/");
 	const courseId = match.pathname.slice(index + 1, match.pathname.length);
-	// console.log(courseId);
 
-	// get movie to fill form
-	const fetchCourseDetail = () => {
-		dispatch(fetchCourseDetailAction(courseId));
+	// course category
+	const [courseCategory, setCourseCategory] = useState([]);
+	// creator
+	const [creator, setCreator] = useState([]);
+
+	// input slug
+	const [slug, setSlug] = useState("");
+
+	// get course category
+	const fetchCourseCategory = async () => {
+		const data = await dispatch(fetchCourseCategoryAction());
+		setCourseCategory(data.payload);
+	};
+
+	// get creator
+	const fetchCreator = async () => {
+		const data = await dispatch(fetchCreatorAction());
+		const arrGV = data.payload.filter((item) => item.maLoaiNguoiDung === "GV");
+		setCreator(arrGV);
+	};
+
+	// get course detail
+	const fetchCourseDetail = async () => {
+		const data = await dispatch(fetchCourseDetailAction(courseId));
+		setSlug(data.payload.biDanh);
 	};
 
 	useEffect(() => {
 		fetchCourseDetail();
+		fetchCourseCategory();
+		fetchCreator();
 	}, []);
 
 	const courseDetail = useSelector((state) => state.course.courseDetail);
+	// console.log(courseDetail);
 
 	// Validation Form
-	// const formik = useFormik({
-	// 	enableReinitialize: true,
-	// 	initialValues: {
-	// 		maKhoaHoc: courseDetail.maPhim,
-	// 		biDanh: courseDetail.biDanh,
-	// 		tenKhoaHoc: courseDetail.tenPhim,
-	// 		moTa: courseDetail.moTa,
-	// 		luotXem: courseDetail.luotXem,
-	// 		hinhAnh: null,
-	// 		ngayTao: courseDetail.ngayTao,
-	// 		soLuongHocVien: courseDetail.soLuongHocVien,
-	// 		nguoiTao: courseDetail.nguoiTao,
-	// 		danhMucKhoaHoc: courseDetail.danhMucKhoaHoc
+	const formik = useFormik({
+		enableReinitialize: true,
+		initialValues: {
+			maKhoaHoc: courseDetail?.maKhoaHoc,
+			biDanh: courseDetail?.biDanh,
+			tenKhoaHoc: courseDetail?.tenKhoaHoc,
+			moTa: courseDetail?.moTa,
+			luotXem: courseDetail?.luotXem,
+			danhGia: 0,
 
-	// 	},
-	// 	onSubmit: (values) => {
-	// 		console.log(values);
-	// 		values.maNhom = "GP03";
-	// 		// // 1) Create formData object
-	// 		let formData = new FormData();
-	// 		for (let key in values) {
-	// 			if (key !== "hinhAnh") {
-	// 				formData.append(key, values[key]);
-	// 			} else {
-	// 				// formData.append("custom name", object file, file name )
-	// 				if (values.hinhAnh !== null) {
-	// 					formData.append("File", values.hinhAnh, values.hinhAnh.name);
-	// 				}
-	// 			}
-	// 		}
-	// 		// get hinhAnh
-	// 		// console.log(formData.get("File").name);
+			hinhAnh: null,
+			ngayTao: courseDetail?.ngayTao,
 
-	// 		// 2) Call api
-	// 		dispatch(updateMovieAction(formData));
-	// 	},
+			maDanhMucKhoaHoc: courseDetail?.danhMucKhoaHoc.tenDanhMucKhoaHoc,
+			taiKhoanNguoiTao: courseDetail?.nguoiTao.hoTen,
+		},
+		onSubmit: (values) => {
+			values.maNhom = "GP01";
+			values.biDanh = slug;
+			values.danhGia = 0;
+			console.log(values);
+			// return;
+			// 1) Create formData object
+			let formData = new FormData();
+			for (let key in values) {
+				if (key !== "hinhAnh") {
+					formData.append(key, values[key]);
+				} else {
+					// formData.append("custom name", object file, file name )
+					if (values.hinhAnh !== null) {
+						formData.append("File", values.hinhAnh, values.hinhAnh.name);
+					}
+				}
+			}
+			// get hinhAnh
+			// console.log(formData.get("File").name);
+			// console.log(formData.get("tenKhoaHoc"));
+			// return;
 
-	// 	// validationSchema: schema,
-	// });
+			// 2) Call api
+			dispatch(updateCourseAction(formData));
+		},
+
+		// validationSchema: schema,
+	});
 
 	// setting form antd
-	// const [componentSize, setComponentSize] = useState("default");
-	// const onFormLayoutChange = ({ size }) => {
-	// 	setComponentSize(size);
-	// };
+	const [componentSize, setComponentSize] = useState("default");
+	const onFormLayoutChange = ({ size }) => {
+		setComponentSize(size);
+	};
 
-	// const handleChangeDatePicker = (value) => {
-	// 	let date = moment(value);
-	// 	formik.setFieldValue("ngayKhoiChieu", date);
-	// };
+	// change date picker
+	const handleChangeDatePicker = (value) => {
+		let date = moment(value).format("DD/MM/YYYY");
+		formik.setFieldValue("ngayTao", date);
+	};
 
-	// const handleChangeSwitch = (name) => {
-	// 	return (value) => formik.setFieldValue(name, value);
-	// };
+	const handleChangeInputNumber = (name) => {
+		return (value) => formik.setFieldValue(name, value);
+	};
 
-	// const handleChangeInputNumber = (name) => {
-	// 	return (value) => formik.setFieldValue(name, value);
-	// };
+	// change image
+	const handleChangeFile = async (e) => {
+		//1) get file from e
+		let file = e.target.files[0];
+		//2) create object to read file
+		if (
+			file.type === "image/jpg" ||
+			file.type === "image/jpeg" ||
+			file.type === "image/gif" ||
+			file.type === "image/png"
+		) {
+			// Save file data to formik. Notice: setFieldValue is async func
+			await formik.setFieldValue("hinhAnh", file);
+			let reader = new FileReader();
+			reader.readAsDataURL(file);
+			reader.onload = (e) => {
+				setImg(e.target.result);
+			};
+		}
+	};
 
-	// const handleChangeFile = async (e) => {
-	// 	//1) get file from e
-	// 	let file = e.target.files[0];
-	// 	//2) create object to read file
-	// 	if (
-	// 		file.type === "image/jpeg" ||
-	// 		file.type === "image/jpg" ||
-	// 		file.type === "image/gif" ||
-	// 		file.type === "image/png"
-	// 	) {
-	// 		// Save file data to formik. Notice: setFieldValue is async func
-	// 		await formik.setFieldValue("hinhAnh", file);
-	// 		let reader = new FileReader();
-	// 		reader.readAsDataURL(file);
-	// 		reader.onload = (e) => {
-	// 			setImg(e.target.result);
-	// 		};
-	// 	}
-	// };
+	// waiting data
+	if (courseCategory.length === 0) return <div>Loading...</div>;
+	if (creator.length === 0) return <div>Loading...</div>;
+	if (!courseDetail) return <div>Loading...</div>;
 
-	if (!courseDetail) {
-		return (
-			<div>
-				<Spin size="large" />
-			</div>
-		);
-	}
+	// ========= setting select course category ===========
+	// convert select course category
+	const convertSelectCourseCategory = () => {
+		return courseCategory?.map((item, index) => {
+			return {
+				label: item.tenDanhMuc,
+				value: item.maDanhMuc,
+				key: index,
+			};
+		});
+	};
+	// get value select course category
+	const handleChangeCourseCategory = (value) => {
+		formik.setFieldValue("maDanhMucKhoaHoc", value);
+	};
+	// ========== END setting select course category ==========
 
-	console.log(courseDetail);
+	// ========= setting select Creator ===========
+	// convert select Creator
+	const convertSelectCreator = () => {
+		return creator?.map((item, index) => {
+			return {
+				label: item.hoTen,
+				value: item.taiKhoan,
+				key: index,
+			};
+		});
+	};
+	// get value select Creator
+	const handleChangeCreator = (value) => {
+		//  Vì khi dùng thẻ select có mode="tags" , thì ta có thể dùng thêm được
+		// chức năng tìm kiếm. Tuy nhiên, kết quả nó luôn trả về một mảng
+		// Vậy nên ta chỉ lấy một giá trị đầu tiên trong mảng (vì api chỉ yêu cầu 1 giá trị)
+		// console.log(value[0]);
+		formik.setFieldValue("taiKhoanNguoiTao", value);
+	};
+	// ========== end setting select course category ==========
 
 	return (
 		<div>
-			{/* <Form
+			<Form
 				onSubmitCapture={formik.handleSubmit}
 				labelCol={{
 					span: 4,
@@ -156,7 +229,9 @@ function EditCourse() {
 				onValuesChange={onFormLayoutChange}
 				size={componentSize}
 			>
-				<h1>Chỉnh sửa khóa học</h1>
+				<h1 style={{ fontSize: 25, marginLeft: 10, marginBottom: 30 }}>
+					Chỉnh sửa khóa học
+				</h1>
 				<Form.Item label="Kích cỡ form" name="size">
 					<Radio.Group>
 						<Radio.Button value="small">Nhỏ</Radio.Button>
@@ -164,81 +239,113 @@ function EditCourse() {
 						<Radio.Button value="large">Lớn</Radio.Button>
 					</Radio.Group>
 				</Form.Item>
+
+				<Form.Item label="Danh mục khóa học">
+					<Select
+						name="maDanhMucKhoaHoc"
+						options={convertSelectCourseCategory()}
+						placeholder="Chọn danh mục"
+						onChange={handleChangeCourseCategory}
+						onBlur={formik.handleBlur}
+						value={formik.values.maDanhMucKhoaHoc}
+					></Select>
+					{formik.touched.maDanhMucKhoaHoc &&
+						formik.errors.maDanhMucKhoaHoc && (
+							<p style={{ color: "red", margin: 0 }}>
+								{formik.errors.maDanhMucKhoaHoc}
+							</p>
+						)}
+				</Form.Item>
+
+				<Form.Item label="Người tạo">
+					<Select
+						name="taiKhoanNguoiTao"
+						options={convertSelectCreator()}
+						placeholder="Chọn người tạo"
+						onChange={handleChangeCreator}
+						onBlur={formik.handleBlur}
+						value={formik.values.taiKhoanNguoiTao}
+					></Select>
+					{formik.touched.taiKhoanNguoiTao &&
+						formik.errors.taiKhoanNguoiTao && (
+							<p style={{ color: "red", margin: 0 }}>
+								{formik.errors.taiKhoanNguoiTao}
+							</p>
+						)}
+					<div style={{ marginTop: 10, color: "gray", fontStyle: "italic" }}>
+						*Lưu ý: chỉ nên chọn một người tạo, hệ thống chỉ lấy một người đầu
+						tiên
+					</div>
+				</Form.Item>
+
+				<Form.Item label="Mã khóa học">
+					<Input
+						name="maKhoaHoc"
+						onChange={formik.handleChange}
+						onBlur={formik.handleBlur}
+						value={formik.values.maKhoaHoc}
+						disabled
+					/>
+
+					{formik.touched.maKhoaHoc && formik.errors.maKhoaHoc && (
+						<p style={{ color: "red", margin: 0 }}>
+							{formik.errors.maKhoaHoc}
+						</p>
+					)}
+				</Form.Item>
+
 				<Form.Item label="Tên khóa học">
 					<Input
 						name="tenKhoaHoc"
 						onChange={formik.handleChange}
-						onBlur={formik.handleBlur}
-						value={formik.values.tenPhim}
+						onBlur={(e) => {
+							formik.handleBlur(e);
+							setSlug(convertToSlug(e.target.value.trim()));
+						}}
+						value={formik.values.tenKhoaHoc}
 					/>
 
-					{formik.touched.tenPhim && formik.errors.tenPhim && (
-						<p style={{ color: "red", margin: 0 }}>{formik.errors.tenPhim}</p>
-					)}
-				</Form.Item>
-				<Form.Item label="Trailer">
-					<Input
-						name="trailer"
-						onChange={formik.handleChange}
-						onBlur={formik.handleBlur}
-						value={formik.values.trailer}
-					/>
-					{formik.touched.trailer && formik.errors.trailer && (
-						<p style={{ color: "red", margin: 0 }}>{formik.errors.trailer}</p>
+					{formik.touched.tenKhoaHoc && formik.errors.tenKhoaHoc && (
+						<p style={{ color: "red", margin: 0 }}>
+							{formik.errors.tenKhoaHoc}
+						</p>
 					)}
 				</Form.Item>
 
+				<Form.Item label="Bí danh">
+					<Input name="biDanh" value={slug} disabled />
+					<div style={{ marginTop: 10, color: "gray", fontStyle: "italic" }}>
+						*Lưu ý: bí danh sẽ dựa vào tên khóa học, không cần nhập vào!
+					</div>
+				</Form.Item>
+
+				{/* <Form.Item label="Mô tả">
+					<SunEditor name="moTa" setContents={formik.values.moTa} />
+				</Form.Item> */}
 				<Form.Item label="Mô tả">
-					<Input
+					<TextArea
+						rows={8}
+						placeholder="Nhập mô tả..."
 						name="moTa"
 						onChange={formik.handleChange}
 						onBlur={formik.handleBlur}
 						value={formik.values.moTa}
 					/>
-					{formik.touched.moTa && formik.errors.moTa && (
-						<p style={{ color: "red", margin: 0 }}>{formik.errors.moTa}</p>
-					)}
 				</Form.Item>
 
-				<Form.Item label="Ngày khởi chiếu">
-					<DatePicker
-						onChange={handleChangeDatePicker}
-						format={"DD/MM/YYYY"}
-						value={moment(formik.values.ngayKhoiChieu)}
-					/>
-
-					{formik.touched.ngayKhoiChieu && formik.errors.ngayKhoiChieu && (
-						<p style={{ color: "red", margin: 0 }}>
-							{formik.errors.ngayKhoiChieu}
-						</p>
-					)}
-				</Form.Item>
-
-				<Form.Item label="Đang chiếu" valuePropName="checked">
-					<Switch
-						onChange={handleChangeSwitch("dangChieu")}
-						checked={formik.values.dangChieu}
+				<Form.Item label="Lượt xem">
+					<InputNumber
+						onChange={handleChangeInputNumber("luotXem")}
+						min={0}
+						max={9999999}
+						value={formik.values.luotXem}
 					/>
 				</Form.Item>
 
-				<Form.Item label="Sắp chiếu" valuePropName="checked">
-					<Switch
-						onChange={handleChangeSwitch("sapChieu")}
-						checked={formik.values.sapChieu}
-					/>
-				</Form.Item>
-
-				<Form.Item label="Hot" valuePropName="checked">
-					<Switch
-						onChange={handleChangeSwitch("hot")}
-						checked={formik.values.hot}
-					/>
-				</Form.Item>
-
-				<Form.Item label="Số sao">
+				<Form.Item label="Đánh giá">
 					<InputNumber
 						onChange={handleChangeInputNumber("danhGia")}
-						min={1}
+						min={0}
 						max={10}
 						value={formik.values.danhGia}
 					/>
@@ -253,9 +360,23 @@ function EditCourse() {
 
 					<img
 						style={{ width: 100, height: 140, objectFit: "cover" }}
-						src={img === "" ? movieDetail?.hinhAnh : img}
+						src={img === "" ? courseDetail.hinhAnh : img}
 						alt="..."
 					/>
+				</Form.Item>
+
+				<Form.Item label="Ngày tạo">
+					<DatePicker
+						name="ngayTao"
+						format={"DD/MM/YYYY"}
+						onChange={handleChangeDatePicker}
+						onBlur={formik.handleBlur}
+						placeholder="Chọn ngày"
+						// value={moment(formik.values.ngayTao)}
+					/>
+					{formik.touched.ngayTao && formik.errors.ngayTao && (
+						<p style={{ color: "red", margin: 0 }}>{formik.errors.ngayTao}</p>
+					)}
 				</Form.Item>
 
 				<Form.Item label="Hành động">
@@ -263,26 +384,22 @@ function EditCourse() {
 						type="submit"
 						style={{
 							cursor: "pointer",
-							padding: "5px 10px",
+							background: "#3498db",
 							border: "none",
-							background: "#00a8ff",
+							padding: "5px 10px",
 							color: "#fff",
 						}}
 					>
-						Cập nhật
+						Cập nhật khóa học
 					</button>
 					<button
-						style={{
-							padding: "3px 10px",
-							marginLeft: 20,
-							cursor: "pointer",
-						}}
-						onClick={() => navigate("/movies/manage")}
+						style={{ marginLeft: 20, cursor: "pointer" }}
+						onClick={() => navigate("/course/manage")}
 					>
 						Trở về
 					</button>
 				</Form.Item>
-			</Form> */}
+			</Form>
 		</div>
 	);
 }

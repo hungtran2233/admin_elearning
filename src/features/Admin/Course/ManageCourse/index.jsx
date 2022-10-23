@@ -9,19 +9,21 @@ import {
 import { Input, Space } from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
-import { NavLink } from "react-router-dom";
-import { fetchCourseListAction } from "../utils/courseAction";
+import { NavLink, useNavigate } from "react-router-dom";
+import { fetchCourseListAction, removeCourseAction } from "../utils/courseAction";
 
 const { Search } = Input;
 
 function ManageCourse() {
 	const dispatch = useDispatch();
+	const navigate = useNavigate();
 
-	const fetchCourseList = () => {
-		dispatch(fetchCourseListAction());
+	const [courseList, setCourseList] = useState([]);
+
+	const fetchCourseList = async () => {
+		const data = await dispatch(fetchCourseListAction());
+		setCourseList(data.payload);
 	};
-
-	const courseList = useSelector((state) => state.course.courseList);
 
 	const [searchText, setSearchText] = useState("");
 
@@ -29,14 +31,25 @@ function ManageCourse() {
 		fetchCourseList();
 	}, []);
 
-	// remove course
-	// const removeMovie = (film) => {
-	// 	if (window.confirm("Bạn có muốn xóa phim " + film.tenPhim)) {
-	// 		dispatch(removeMovieAction(film.maPhim));
-	// 	}
-	// };
+	// data for table
+	if (!courseList) return <Spin size="large" />;
+	const data = courseList;
 
-	// setting modal
+	// remove course
+	const removeCourse = (course) => {
+		if (window.confirm("Bạn có muốn xóa khóa học: " + course.tenKhoaHoc)) {
+			// soft remove
+			const cloneArr = [...courseList];
+			const index = cloneArr.findIndex(
+				(item) => item.maKhoaHoc === course.maKhoaHoc
+			);
+			cloneArr.splice(index, 1);
+			setCourseList(cloneArr);
+
+			// hard remove
+			dispatch(removeCourseAction(course.maKhoaHoc));
+		}
+	};
 
 	const columns = [
 		{
@@ -99,7 +112,13 @@ function ManageCourse() {
 					<Fragment>
 						<div>{course.tenKhoaHoc}</div>
 						<div style={{ marginTop: 20 }}>
-							<Button>Chi tiết</Button>
+							<Button
+								onClick={() =>
+									navigate("/admin/course/edit/" + course.maKhoaHoc)
+								}
+							>
+								Chi tiết
+							</Button>
 						</div>
 					</Fragment>
 				);
@@ -141,11 +160,14 @@ function ManageCourse() {
 					<Fragment>
 						<NavLink
 							style={{ marginRight: 20 }}
-							to={"/course/edit/" + course.maKhoaHoc}
+							to={"/admin/course/edit/" + course.maKhoaHoc}
 						>
 							<EditOutlined style={{ fontSize: 25 }} title="Chỉnh sửa" />
 						</NavLink>
-						<span style={{ cursor: "pointer" }}>
+						<span
+							style={{ cursor: "pointer" }}
+							onClick={() => removeCourse(course)}
+						>
 							<DeleteOutlined
 								style={{ fontSize: 25, color: "red" }}
 								title="Xóa"
@@ -157,13 +179,9 @@ function ManageCourse() {
 		},
 	];
 
-	// data for table
-	if (!courseList) return <Spin size="large" />;
-	const data = courseList;
-
 	return (
 		<div className="EditMovie">
-			<h1 className="title" style={{ fontSize: 20 }}>
+			<h1 className="title" style={{ fontSize: 25 }}>
 				Danh sách khóa học
 			</h1>
 

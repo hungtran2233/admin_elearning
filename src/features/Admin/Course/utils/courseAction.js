@@ -70,7 +70,7 @@ export const fetchCreatorAction = createAsyncThunk("creator/fetchCreator", async
 	}
 });
 
-// get 1 movie to edit
+// get 1 Course to edit
 export const fetchCourseDetailAction = createAsyncThunk(
 	"course/fetchCourseDetail",
 	async (courseId) => {
@@ -87,6 +87,45 @@ export const fetchCourseDetailAction = createAsyncThunk(
 			return res.data;
 		} catch (err) {
 			console.log(err);
+		}
+	}
+);
+
+// update course
+export const updateCourseAction = createAsyncThunk(
+	"course/updateCourse",
+	async (formData) => {
+		try {
+			const res = await instance.request({
+				url: "/api/QuanLyKhoaHoc/CapNhatKhoaHocUpload",
+				method: "POST",
+				data: formData,
+			});
+			alert("Cập nhật khóa học thành công!");
+			return res;
+		} catch (err) {
+			alert("Không thành công ! " + err.response.data);
+			console.log(err);
+		}
+	}
+);
+
+// remove course
+export const removeCourseAction = createAsyncThunk(
+	"course/removeCourse",
+	async (courseId) => {
+		try {
+			const res = await instance.request({
+				url: "/api/QuanLyKhoaHoc/XoaKhoaHoc",
+				method: "DELETE",
+				params: {
+					maKhoaHoc: courseId,
+				},
+			});
+			alert("Xóa khóa học thành công!");
+		} catch (err) {
+			// console.log(err.response);
+			alert("Xóa không thành công!" + " " + err.response.statusText);
 		}
 	}
 );

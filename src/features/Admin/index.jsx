@@ -14,11 +14,13 @@ import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import User from "./User/User";
 import "./admin.scss";
 
-import { fetchUsersListAction } from "./utils/adminAction";
 import Dashboard from "./Course/Dashboard";
 import ManageCourse from "./Course/ManageCourse";
 import EditCourse from "./Course/EditCourse";
 import AddCourse from "./Course/AddCourse";
+import { useDispatch } from "react-redux";
+import { fetchProfileAction } from "features/Authentication/utils/authAction";
+import AddUser from "./User/components/AddUser";
 const { Header, Content, Footer, Sider } = Layout;
 
 function getItem(label, key, icon, children) {
@@ -31,11 +33,11 @@ function getItem(label, key, icon, children) {
 }
 
 const items = [
-	getItem("Khóa học", "/course", <DesktopOutlined />, [
-		getItem("Quản lý khóa học", "/course/manage"),
-		getItem("Thêm khóa học", "/course/add"),
+	getItem("Khóa học", "/admin/course", <DesktopOutlined />, [
+		getItem("Quản lý khóa học", "/admin/course/manage"),
+		getItem("Thêm khóa học", "/admin/course/add"),
 	]),
-	getItem("Người dùng", "/users", <UserOutlined />),
+	getItem("Người dùng", "/admin/user", <UserOutlined />),
 	getItem("Đăng Xuất", "logout", <LoginOutlined />),
 ];
 
@@ -59,35 +61,6 @@ const Admin = () => {
 				collapsed={collapsed}
 				onCollapse={(value) => setCollapsed(value)}
 			>
-				{/* <div className="logo">
-					{login ? (
-						<div style={{ color: "#fff", textAlign: "center" }}>
-							<div
-								style={{
-									display: "inline-block",
-									border: "3px solid white",
-									borderRadius: "50%",
-								}}
-							>
-								<UserOutlined style={{ fontSize: 30 }} />
-							</div>
-							<div style={{ marginTop: 10, fontSize: 16 }}>
-								Hi, {login?.taiKhoan}
-							</div>
-						</div>
-					) : (
-						<h1
-							onClick={navigate("/signin")}
-							style={{
-								color: "#fff",
-								display: "inline-block",
-								cursor: "pointer",
-							}}
-						>
-							Bạn chưa đăng nhập !
-						</h1>
-					)}
-				</div> */}
 				<Menu
 					onClick={({ key }) => {
 						navigate(key);
@@ -97,7 +70,7 @@ const Admin = () => {
 						}
 					}}
 					theme="dark"
-					defaultSelectedKeys={["/"]}
+					defaultSelectedKeys={["/admin"]}
 					mode="inline"
 					items={items}
 				/>
@@ -126,6 +99,9 @@ const Admin = () => {
 							<Route path="/course/manage" element={<ManageCourse />} />
 							<Route path="/course/edit/:id" element={<EditCourse />} />
 							<Route path="/course/add" element={<AddCourse />} />
+
+							<Route path="/user" element={<User />} />
+							<Route path="/user/add" element={<AddUser />} />
 						</Routes>
 					</div>
 				</Content>

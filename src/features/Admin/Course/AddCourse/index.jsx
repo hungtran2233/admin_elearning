@@ -26,6 +26,7 @@ import {
 } from "../utils/courseAction";
 import Swal from "sweetalert2";
 import SunEditor from "suneditor-react";
+const { TextArea } = Input;
 
 const schema = yup.object({
 	maKhoaHoc: yup.string().required("*Bạn chưa nhập mã khóa học !"),
@@ -106,13 +107,12 @@ function AddCourse() {
 			let choice = window.confirm("Bạn có muốn thêm khóa học này không ?");
 			if (choice == true) {
 				dispatch(addCourseAction(formData));
-				setTimeout(navigate("/course/manage"), 2000);
 			} else {
 				return;
 			}
 		},
 
-		validationSchema: schema,
+		// validationSchema: schema,
 	});
 
 	// setting form antd
@@ -208,7 +208,7 @@ function AddCourse() {
 				onValuesChange={onFormLayoutChange}
 				size={componentSize}
 			>
-				<h1 style={{ fontSize: 20, marginLeft: 50, marginBottom: 30 }}>
+				<h1 style={{ fontSize: 25, marginLeft: 10, marginBottom: 30 }}>
 					Thêm khóa học mới
 				</h1>
 				<Form.Item label="Kích cỡ form" name="size">
@@ -227,9 +227,12 @@ function AddCourse() {
 						onChange={handleChangeCourseCategory}
 						onBlur={formik.handleBlur}
 					></Select>
-					{formik.touched.maRap && formik.errors.maRap && (
-						<p style={{ color: "red", margin: 0 }}>{formik.errors.maRap}</p>
-					)}
+					{formik.touched.maDanhMucKhoaHoc &&
+						formik.errors.maDanhMucKhoaHoc && (
+							<p style={{ color: "red", margin: 0 }}>
+								{formik.errors.maDanhMucKhoaHoc}
+							</p>
+						)}
 				</Form.Item>
 
 				<Form.Item label="Người tạo">
@@ -241,9 +244,12 @@ function AddCourse() {
 						mode="tags"
 						onBlur={formik.handleBlur}
 					></Select>
-					{formik.touched.maRap && formik.errors.maRap && (
-						<p style={{ color: "red", margin: 0 }}>{formik.errors.maRap}</p>
-					)}
+					{formik.touched.taiKhoanNguoiTao &&
+						formik.errors.taiKhoanNguoiTao && (
+							<p style={{ color: "red", margin: 0 }}>
+								{formik.errors.taiKhoanNguoiTao}
+							</p>
+						)}
 					<div style={{ marginTop: 10, color: "gray", fontStyle: "italic" }}>
 						*Lưu ý: chỉ nên chọn một người tạo, hệ thống chỉ lấy một người đầu
 						tiên
@@ -288,8 +294,17 @@ function AddCourse() {
 					</div>
 				</Form.Item>
 
+				{/* <Form.Item label="Mô tả">
+					<SunEditor name="moTa" onChange={getContentEditor} />
+				</Form.Item> */}
 				<Form.Item label="Mô tả">
-					<SunEditor />
+					<TextArea
+						name="moTa"
+						rows={6}
+						placeholder="Nhập mô tả..."
+						onChange={formik.handleChange}
+						onBlur={formik.handleBlur}
+					/>
 				</Form.Item>
 
 				<Form.Item label="Lượt xem">
