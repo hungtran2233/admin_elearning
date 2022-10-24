@@ -1,200 +1,270 @@
-import { Form, Input, Radio, Select } from "antd";
-import { useFormik } from "formik";
+import {
+  AutoComplete,
+  Button,
+  Cascader,
+  Checkbox,
+  Col,
+  Form,
+  Input,
+  InputNumber,
+  Popconfirm,
+  Row,
+  Select,
+} from "antd";
+import instance from "api/instance";
+//   import { fetchUsersListAction } from "features/Admin/utils/adminAction";
+import { fetchUsersListAction } from "../../utils/userAction";
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { addUserAction } from "../../utils/userAction";
-import * as yup from "yup";
+import Swal from "sweetalert2";
+import "./_signUp.scss";
 const { Option } = Select;
 
-const schema = yup.object({
-	taiKhoan: yup
-		.string()
-		.required("*Trường này bắt buộc nhập !")
-		.min(6, "*Tài khoản tối thiểu 6 kí tự"),
-	matKhau: yup
-		.string()
-		.required("*Trường này bắt buộc nhập !")
-		.min(6, "*Mật khẩu phải từ 6 đến 14 kí tự"),
-	hoTen: yup
-		.string()
-		.required("*Trường này bắt buộc nhập !")
-		.matches(/^[A-Za-z ]+$/g, "*Họ tên không đúng"),
-	email: yup
-		.string()
-		.required("*Trường này bắt buộc nhập !")
-		.email("*Email không đúng định dạng"),
-	soDt: yup.string().required("*Trường này bắt buộc nhập !"),
-});
+const formItemLayout = {
+  labelCol: {
+    xs: {
+      span: 24,
+    },
+    sm: {
+      span: 8,
+    },
+  },
+  wrapperCol: {
+    xs: {
+      span: 24,
+    },
+    sm: {
+      span: 16,
+    },
+  },
+};
+const tailFormItemLayout = {
+  wrapperCol: {
+    xs: {
+      span: 24,
+      offset: 0,
+    },
+    sm: {
+      span: 16,
+      offset: 8,
+    },
+  },
+};
 
-function AddUser() {
-	const dispatch = useDispatch();
-	const navigate = useNavigate();
+const SignUp = () => {
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const [contentError, setContentErro] = useState("");
+  const navigate = useNavigate();
+  const ditpatch = useDispatch();
+  const onFinish = (values) => {
+    console.log("Received values of form: ", values);
+  };
 
-	const [typeUser, setTypeUser] = useState("");
+  const prefixSelector = (
+    <Form.Item name="prefix" noStyle>
+      <Select
+        style={{
+          width: 70,
+        }}
+      >
+        <Option value="+84">+84</Option>
+        <Option value="0">+0084</Option>
+      </Select>
+    </Form.Item>
+  );
+  const addUsersApi = async (user) => {
+    try {
+      setLoading(true);
+      const res = await instance.request({
+        url: "/api/QuanLyNguoiDung/ThemNguoiDung",
+        method: "POST",
+        data: user,
+      });
+      Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "Thêm Thành Công !",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      fetchUser();
+      setLoading(false);
 
-	const formik = useFormik({
-		initialValues: {
-			taiKhoan: "",
-			matKhau: "",
-			hoTen: "",
-			email: "",
-			soDT: "",
-			maLoaiNguoiDung: "",
-		},
+      navigate("/admin/user");
+    } catch (error) {
+      setLoading(false);
+      Swal.fire({
+        title: error.response.data.content,
+        text: "Chưa Thêm Được",
+        icon: "error",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  const fetchUser = () => {
+    ditpatch(fetchUsersListAction());
+  };
+  return (
+    <Form
+      {...formItemLayout}
+      form={form}
+      name="register"
+      onFinish={(values) => {
+        addUsersApi({ ...values, maNhom: "GP01" });
+      }}
+      initialValues={{
+        residence: ["zhejiang", "hangzhou", "xihu"],
+        prefix: "+84",
+      }}
+      scrollToFirstError
+    >
+      <Form.Item
+        name="hoTen"
+        label="Họ và Tên"
+        tooltip="What do you want others to call you?"
+        rules={[
+          {
+            required: true,
+            message: "Vui Lòng Nhập Họ Tên!",
+            whitespace: true,
+          },
+        ]}
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item
+        name="taiKhoan"
+        label="Tài Khoản"
+        tooltip="What do you want others to call you?"
+        rules={[
+          {
+            required: true,
+            message: "Vui Lòng Nhập Tài Khoản!",
+            whitespace: true,
+          },
+        ]}
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item
+        name="matKhau"
+        label="Mật Khẩu"
+        rules={[
+          {
+            required: true,
+            message: "Vui Lòng Nhập Mật Khẩu!",
+          },
+        ]}
+        hasFeedback
+      >
+        <Input.Password />
+      </Form.Item>
 
-		onSubmit: (user) => {
-			const newUser = { ...user, maNhom: "GP01", maLoaiNguoiDung: typeUser };
-			// console.log(newUser);
-			dispatch(addUserAction(newUser));
-		},
+      <Form.Item
+        name="confirm"
+        label="Xác Nhận Lại Mật Khẩu"
+        dependencies={["password"]}
+        hasFeedback
+        rules={[
+          {
+            required: true,
+            message: "Mật Khẩu Không Đúng!",
+          },
+          ({ getFieldValue }) => ({
+            validator(_, value) {
+              if (!value || getFieldValue("matKhau") === value) {
+                return Promise.resolve();
+              }
 
-		validationSchema: schema,
-	});
+              return Promise.reject(
+                new Error("The two passwords that you entered do not match!")
+              );
+            },
+          }),
+        ]}
+      >
+        <Input.Password />
+      </Form.Item>
+      <Form.Item
+        name="email"
+        label="E-mail"
+        rules={[
+          {
+            type: "email",
+            message: "Email Không Đúng Định Dạng",
+          },
+          {
+            required: true,
+            message: "Vui Lòng Nhập Email!",
+          },
+        ]}
+      >
+        <Input />
+      </Form.Item>
 
-	// setting form antd
-	const [componentSize, setComponentSize] = useState("default");
-	const onFormLayoutChange = ({ size }) => {
-		setComponentSize(size);
-	};
+      <Form.Item
+        name="soDt"
+        label="Số Điện Thoại"
+        rules={[
+          {
+            required: true,
+            message: "Vui Lòng Nhập Số Điện Thoại!",
+          },
+        ]}
+      >
+        <Input
+          addonBefore={prefixSelector}
+          style={{
+            width: "100%",
+          }}
+        />
+      </Form.Item>
 
-	const handleChange = (value) => {
-		setTypeUser(value);
-	};
+      <Form.Item
+        name="maLoaiNguoiDung"
+        label="Phân Quyền"
+        rules={[
+          {
+            required: true,
+            message: "Chọn Phân Quyền!",
+          },
+        ]}
+      >
+        <Select placeholder="Phân Quyền">
+          <Option value="HV">Học Viên</Option>
+          <Option value="GV">Giáo Vụ</Option>
+        </Select>
+      </Form.Item>
 
-	return (
-		<div>
-			<Form
-				onSubmitCapture={formik.handleSubmit}
-				labelCol={{
-					span: 4,
-				}}
-				wrapperCol={{
-					span: 14,
-				}}
-				layout="horizontal"
-				initialValues={{
-					size: componentSize,
-				}}
-				onValuesChange={onFormLayoutChange}
-				size={componentSize}
-			>
-				<h1 style={{ fontSize: 25, marginLeft: 10, marginBottom: 30 }}>
-					Thêm người dùng mới
-				</h1>
-				<Form.Item label="Kích cỡ form" name="size">
-					<Radio.Group>
-						<Radio.Button value="small">Nhỏ</Radio.Button>
-						<Radio.Button value="default">Bình thường</Radio.Button>
-						<Radio.Button value="large">Lớn</Radio.Button>
-					</Radio.Group>
-				</Form.Item>
+      <Form.Item
+        name="agreement"
+        valuePropName="checked"
+        rules={[
+          {
+            validator: (_, value) =>
+              value
+                ? Promise.resolve()
+                : Promise.reject(new Error("Đồng Ý Điều Khoản")),
+          },
+        ]}
+        {...tailFormItemLayout}
+      >
+        <Checkbox>
+          Đồng Ý<a href=""> Điều Khoản</a>
+        </Checkbox>
+      </Form.Item>
+      <Form.Item {...tailFormItemLayout}>
+        <Button loading={loading} type="primary" htmlType="submit">
+          Register
+        </Button>
+      </Form.Item>
+    </Form>
+  );
+};
 
-				<Form.Item label="Tài khoản">
-					<Input
-						name="taiKhoan"
-						onChange={formik.handleChange}
-						onBlur={formik.handleBlur}
-					/>
-
-					{formik.touched.taiKhoan && formik.errors.taiKhoan && (
-						<p style={{ color: "red", margin: 0 }}>
-							{formik.errors.taiKhoan}
-						</p>
-					)}
-				</Form.Item>
-
-				<Form.Item label="Mật khẩu">
-					<Input
-						name="matKhau"
-						onChange={formik.handleChange}
-						onBlur={formik.handleBlur}
-					/>
-
-					{formik.touched.matKhau && formik.errors.matKhau && (
-						<p style={{ color: "red", margin: 0 }}>{formik.errors.matKhau}</p>
-					)}
-				</Form.Item>
-
-				<Form.Item label="Họ tên">
-					<Input
-						name="hoTen"
-						onChange={formik.handleChange}
-						onBlur={formik.handleBlur}
-					/>
-
-					{formik.touched.hoTen && formik.errors.hoTen && (
-						<p style={{ color: "red", margin: 0 }}>{formik.errors.hoTen}</p>
-					)}
-				</Form.Item>
-
-				<Form.Item label="Email">
-					<Input
-						name="email"
-						onChange={formik.handleChange}
-						onBlur={formik.handleBlur}
-					/>
-
-					{formik.touched.email && formik.errors.email && (
-						<p style={{ color: "red", margin: 0 }}>{formik.errors.email}</p>
-					)}
-				</Form.Item>
-
-				<Form.Item label="Số điện thoại">
-					<Input
-						name="soDT"
-						onChange={formik.handleChange}
-						onBlur={formik.handleBlur}
-					/>
-
-					{formik.touched.soDT && formik.errors.soDT && (
-						<p style={{ color: "red", margin: 0 }}>{formik.errors.soDT}</p>
-					)}
-				</Form.Item>
-
-				<Form.Item label="Loại người dùng">
-					<Select
-						placeholder="Chọn loại người dùng"
-						name="maLoaiNguoiDung"
-						style={{
-							width: 180,
-						}}
-						onChange={handleChange}
-						onBlur={formik.handleBlur}
-					>
-						<Option value="GV">Giáo Vụ</Option>
-						<Option value="HV">Học Viên</Option>
-					</Select>
-					{formik.touched.maLoaiNguoiDung && formik.errors.maLoaiNguoiDung && (
-						<p style={{ color: "red", margin: 0 }}>
-							{formik.errors.maLoaiNguoiDung}
-						</p>
-					)}
-				</Form.Item>
-
-				<Form.Item label="Hành động">
-					<button
-						type="submit"
-						style={{
-							cursor: "pointer",
-							background: "#3498db",
-							border: "none",
-							padding: "5px 10px",
-							color: "#fff",
-						}}
-					>
-						Thêm người dùng
-					</button>
-					<button
-						style={{ marginLeft: 20, cursor: "pointer" }}
-						onClick={() => navigate("/admin/user")}
-					>
-						Trở về
-					</button>
-				</Form.Item>
-			</Form>
-		</div>
-	);
-}
-
-export default AddUser;
+export default SignUp;

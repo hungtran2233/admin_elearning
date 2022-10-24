@@ -5,3 +5,14 @@
     border-radius: 4px;
     margin-bottom: 10px;
 }
+.ant-select-disabled.ant-select:not(.ant-select-customize-input) .ant-select-selector{
+    background: #fff;
+    color: rgba(0, 0, 0, 0.85);
+}
+.ant-select.ant-select-single.ant-select-show-arrow.ant-select-disabled{
+   
+    border:none;
+}
+.ant-select.ant-select-single.ant-select-show-arrow{
+    border: 1px solid #1890ff;
+}

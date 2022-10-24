@@ -37,7 +37,11 @@ const items = [
 		getItem("Quản lý khóa học", "/admin/course/manage"),
 		getItem("Thêm khóa học", "/admin/course/add"),
 	]),
-	getItem("Người dùng", "/admin/user", <UserOutlined />),
+	getItem("Người dùng", "/admin", <UserOutlined />,
+	[
+		getItem('Quản lý người dùng','/admin/user'),
+		getItem('Đăng kí khóa học')
+	]),
 	getItem("Đăng Xuất", "logout", <LoginOutlined />),
 ];
 
